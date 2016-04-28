@@ -8,17 +8,23 @@ require "shellwords"
 require "pathname"
 require "csv"
 
-extract = ARGV.first
+kpis = [ARGV.first]
 
-RUBYOPT="-rrestore_environment"
-CSV.open("#{Dir.pwd}/#{extract}.csv", "wb") do |csv|
-  csv << (2006...2016).to_a.reverse.map{|x|"Year #{x}"}.unshift("Name of Company")
-  Dir.foreach("#{Dir.pwd}/downloaded_data").drop(2).each do |file|
-    xls = Roo::Excel.new("#{Dir.pwd}/downloaded_data/#{file.gsub(/ /, '\ ')}")
-    company_name =  xls.to_csv.lines.first.gsub(',', '').gsub('"', '')
+unless kpis.any?
+  kpis = ["Trade creditors", "current assets", "Cost of sales", "EBITDA", "Number of employees", "Gross profit", "Stock & W.I.P", "Profit (Loss) for period", "Operating profit", "Turnover", "Total assets", "Net assets", "EBIT Margin", "EBITDA margin", "Gross Margin", "Profit Margin", "Profit per employee (Unit)", "Turnover per employee (Unit)", "Total Assets per employee (Unit)"]
+end
 
-    row = xls.to_csv.lines.select{|x| /#{extract}"/ =~ x}.map{|x|x.scan(/\d+/)}.flatten.unshift(company_name)
+kpis.each do |kpi|
+  CSV.open("#{Dir.pwd}/#{kpi}.csv", "wb") do |csv|
+    puts "Compiling data for #{kpi}"
+    csv << (2006...2016).to_a.reverse.map{|x|"Year #{x}"}.unshift("Name of Company")
+    Dir.foreach("#{Dir.pwd}/downloaded_data").drop(2).each do |file|
+      xls = Roo::Excel.new("#{Dir.pwd}/downloaded_data/#{file.gsub(/ /, '\ ')}")
+      company_name =  xls.to_csv.lines.first.gsub(',', '').gsub('"', '')
 
-    csv << row
+      row = xls.to_csv.lines.select{|x| /#{kpi}/i =~ x}.map{|x|x.scan(/\d+/)}.flatten.unshift(company_name)
+
+      csv << row
+    end
   end
 end
