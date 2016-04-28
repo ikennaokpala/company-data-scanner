@@ -12,10 +12,10 @@ extract = ARGV.first
 
 RUBYOPT="-rrestore_environment"
 CSV.open("#{Dir.pwd}/#{extract}.csv", "wb") do |csv|
-  csv << ["Name of Company", "Year 2015", "Year 2014",  "Year 2013",  "Year 2012",  "Year 2011",  "Year 2010",  "Year 2009",   "Year 2008",   "Year 2007",   "Year 2006"]
+  csv << (2006...2016).to_a.reverse.map{|x|"Year #{x}"}.unshift("Name of Company")
   Dir.foreach("#{Dir.pwd}/downloaded_data").drop(2).each do |file|
     xls = Roo::Excel.new("#{Dir.pwd}/downloaded_data/#{file.gsub(/ /, '\ ')}")
-    company_name =  xls.to_csv.lines.first.gsub(',', '')
+    company_name =  xls.to_csv.lines.first.gsub(',', '').gsub('"', '')
 
     row = xls.to_csv.lines.select{|x| /#{extract}"/ =~ x}.map{|x|x.scan(/\d+/)}.flatten.unshift(company_name)
 
