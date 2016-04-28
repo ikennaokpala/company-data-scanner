@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+
+#make sure to install roo-xls gem install roo roo-xls
+
+require "rubygems"
+require "roo-xls"
+require "shellwords"
+require "pathname"
+require "csv"
+
+extract = ARGV.first
+
+RUBYOPT="-rrestore_environment"
+CSV.open("#{Dir.pwd}/#{extract}.csv", "wb") do |csv|
+  csv << ["Name of Company", "Year 2015", "Year 2014",  "Year 2013",  "Year 2012",  "Year 2011",  "Year 2010",  "Year 2009",   "Year 2008",   "Year 2007",   "Year 2006"]
+  Dir.foreach("#{Dir.pwd}/downloaded_data").drop(2).each do |file|
+    xls = Roo::Excel.new("#{Dir.pwd}/downloaded_data/#{file.gsub(/ /, '\ ')}")
+    company_name =  xls.to_csv.lines.first.gsub(',', '')
+
+    row = xls.to_csv.lines.select{|x| /#{extract}"/ =~ x}.map{|x|x.scan(/\d+/)}.flatten.unshift(company_name)
+
+    csv << row
+  end
+end
