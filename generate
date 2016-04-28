@@ -11,7 +11,7 @@ require "csv"
 kpis = [ARGV.first]
 
 unless kpis.any?
-  kpis = ["Trade creditors", "current assets", "Cost of sales", "EBITDA", "Number of employees", "Gross profit", "Stock & W.I.P", "Profit (Loss) for period", "Operating profit", "Turnover", "Total assets", "Net assets", "EBIT Margin", "EBITDA margin", "Gross Margin", "Profit Margin", "Profit per employee (Unit)", "Turnover per employee (Unit)", "Total Assets per employee (Unit)"]
+  kpis = ["Trade creditors", "current assets", "Cost of sales", "EBITDA", "Number of employees", "Gross profit", "Stock & W.I.P.", "Profit (Loss) for period", "Operating profit", "Turnover", "Total assets", "Net assets", "EBIT margin (%)", "EBITDA margin (%)", "Gross margin (%)", "Profit Margin", "Profit per employee (Unit)", "Turnover per employee (Unit)", "Total Assets per employee (Unit)"].map(&:downcase)
 end
 
 kpis.each do |kpi|
@@ -19,10 +19,10 @@ kpis.each do |kpi|
     puts "Compiling data for #{kpi}"
     csv << (2006...2016).to_a.reverse.map{|x|"Year #{x}"}.unshift("Name of Company")
     Dir.foreach("#{Dir.pwd}/downloaded_data").drop(2).each do |file|
-      xls = Roo::Excel.new("#{Dir.pwd}/downloaded_data/#{file.gsub(/ /, '\ ')}")
+      xls = Roo::Excel.new("#{Dir.pwd}/downloaded_data/#{file}")
       company_name =  xls.to_csv.lines.first.gsub(',', '').gsub('"', '')
 
-      row = xls.to_csv.lines.select{|x| /#{kpi}/i =~ x}.map{|x|x.scan(/\d+/)}.flatten.unshift(company_name)
+      row = xls.to_csv.lines.select{|x| x.split(',').any?{|y| y.gsub('"','').strip!&.downcase == kpi}}.map{|z| z.scan(/\d+/)}.flatten.unshift(company_name)
 
       csv << row
     end
