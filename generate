@@ -5,7 +5,6 @@
 require "rubygems"
 require "roo-xls"
 require "shellwords"
-require "pathname"
 require "csv"
 
 kpis = [ARGV.first]

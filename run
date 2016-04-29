@@ -1,4 +1,7 @@
 #!/bin/bash
+
+sudo gem install roo-xls
+
 cd ./downloaded_data
 for f in *; do mv "$f" "${f// /_}"; done
 cd ../
