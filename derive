@@ -1,0 +1,61 @@
+#!/usr/bin/env ruby
+
+#make sure to install roo-xls gem install roo roo-xls
+
+require "rubygems"
+require "csv"
+require "pry"
+
+# kpis = ['asset_turnover', 'net_income_margin', 'revenue_growth_margin', 'ebitda_per_total_employment_cost', 'ebitda_per_employee', 'days_of_sales_of_inventory', 'days_of_sales_outstanding', 'days_of_payables_outstanding', 'gross_margin_return_on_investment', 'cash_conversion_cycle']
+kpis = ['asset_turnover']
+
+class Derive
+  def asset_turnover
+    filenames = ['Turnover', 'Total_Assets']
+    headers = []
+    company_total_assets = []
+    company_turnovers = []
+    CSV.foreach("#{Dir.pwd}/downloaded_data/#{filenames.first}.csv", headers: true) do |row|
+      _row = row.to_hash
+      row_values = _row.values
+      headers = _row.keys
+      company_turnovers << {row_values.first => row_values.drop(1)}.inject({}) do |seed, (key, values)|
+          # binding.pry
+          seed[key] = values.map{|x|x&.gsub(',','').to_i}
+          seed
+        end
+    end
+
+    CSV.foreach("#{Dir.pwd}/downloaded_data/#{filenames.last}.csv", headers: true) do |row|
+      row_values = row.to_hash.values
+      company_total_assets << {row_values.first => row_values.drop(1)}.inject({}) do |seed, (key, values)|
+          seed[key] = values.map{|x|x&.gsub(',','').to_i}
+          seed
+        end
+    end
+    # binding.pry
+    CSV.open("#{Dir.pwd}/#{__method__}.csv", "wb") do |csv|
+      csv << headers
+      # binding.pry
+      company_turnovers.each do |turnovers|
+        company_name = turnovers.keys.first
+        _turnovers = turnovers&.values&.flatten
+        total_assets = company_total_assets.find{|x|x.keys.first&.downcase&.strip! == company_name&.downcase&.strip!}&.values&.flatten
+        # unless company_name.nil? || _turnovers.nil? || total_assets.nil?
+        unless total_assets.nil?
+          # binding.pry
+          csv << _turnovers.zip(total_assets).map do |pairs|
+              pairs.first.fdiv(pairs.last)&.round(2)
+            end.unshift(company_name)
+        end
+      end
+    end
+  end
+end
+
+
+derive = Derive.new
+
+kpis.each do |kpi|
+  derive.send(kpi.to_sym)
+end
