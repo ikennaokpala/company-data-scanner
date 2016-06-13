@@ -10,20 +10,22 @@ require "csv"
 kpis = [ARGV.first]
 
 unless kpis.any?
-  kpis = ["Trade creditors", "current assets", "Cost of sales", "EBITDA", "Number of employees", "Gross profit", "Stock & W.I.P.", "Profit (Loss) for period", "Operating profit", "Turnover", "Total assets", "Net assets", "EBIT margin (%)", "EBITDA margin (%)", "Gross margin (%)", "Profit Margin", "Profit per employee (Unit)", "Turnover per employee (Unit)", "Total Assets per employee (Unit)"].map(&:downcase)
+  kpis = ["Trade creditors", "current assets", "Cost of sales", "EBITDA", "Number of employees", "Gross profit", "Stock & W.I.P.", "Profit (Loss) for period", "Operating profit", "Turnover", "Total assets", "Net assets", "EBIT margin (%)", "EBITDA margin (%)", "Gross margin (%)", "Profit Margin", "Profit per employee (Unit)", "Turnover per employee (Unit)", "Total Assets per employee (Unit)", "Remuneration", "Directors\' Remuneration", "Highest Paid Director", "Debtor Collection (days)"].map(&:downcase)
 end
 
 kpis.each do |kpi|
   CSV.open("#{Dir.pwd}/#{kpi}.csv", "wb") do |csv|
     puts "Compiling data for #{kpi}"
     csv << (2006...2016).to_a.reverse.map{|x|"Year #{x}"}.unshift("Name of Company")
-    Dir.foreach("#{Dir.pwd}/downloaded_data").drop(2).each do |file|
-      xls = Roo::Excel.new("#{Dir.pwd}/downloaded_data/#{file}")
-      company_name =  xls.to_csv.lines.first.gsub(',', '').gsub('"', '')
+    Dir.foreach("#{Dir.pwd}/downloaded_data").each do |file_path|
+      if File.extname(file_path) == ".xls"
+        xls = Roo::Excel.new("#{Dir.pwd}/downloaded_data/#{file_path}")
+        company_name =  xls.to_csv.lines.first.gsub(',', '').gsub('"', '')
 
-      row = xls.to_csv.lines.select{|x| x.split(',').any?{|y| y.gsub('"','').strip!&.downcase == kpi}}.map{|z| z.scan(/\d+/)}.flatten.unshift(company_name)
+        row = xls.to_csv.lines.select{|x| x.split(',').any?{|y| y.gsub('"','').strip!&.downcase == kpi}}.map{|z| z.scan(/\d+/)}.flatten.unshift(company_name)
 
-      csv << row
+        csv << row
+      end
     end
   end
 end
